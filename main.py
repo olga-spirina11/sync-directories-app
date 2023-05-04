@@ -1,16 +1,13 @@
-# This is a sample Python script.
+import argparse
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
+    parser = argparse.ArgumentParser(description='cmd utility to sync two folders content')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    parser.add_argument('--src', required=True, help='source folder')
+    parser.add_argument('--target', required=True, help='target folder')
+    parser.add_argument('--interval_sec', required=True, help='interval of synchronization')
+    parser.add_argument('--log', required=True, help='log file path')
+
+    args = vars(parser.parse_args())
+
+    print(args)
