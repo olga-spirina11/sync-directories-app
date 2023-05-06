@@ -1,8 +1,6 @@
 import argparse
-import os
 import logging
-
-import pytest
+import os.path
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, filename='/Users/grigorii/Projects/sync_folder_app/app.log')
@@ -23,6 +21,10 @@ if __name__ == '__main__':
     print(args)
 
 
+def sync_dirs(src_dir, target_dir):
+    pass
+
+
 # @pytest.fixture(autouse=True)
 # def setup():
 #     pass
@@ -33,11 +35,34 @@ if __name__ == '__main__':
 
 
 def test_smth(tmp_path):
+    # Given ------------------------------------------------------------------------------------------------------------
     log = logging.getLogger(__name__)
-    log.info('Some msg')
+    log.info(tmp_path)
 
-    # print(f'tmp_path={tmp_path}')
-    d = tmp_path / "sub"
-    d.mkdir()
+    # Create source & target dirs
+    dir_src = tmp_path / "source"
+    dir_src.mkdir()
 
-    assert False
+    dir_target = tmp_path / "target"
+    dir_target.mkdir()
+
+    # Create files
+    dic = {
+        'f1.txt': 'foo\n',
+        'f2.txt': 'bar\n',
+        'f3.txt': 'foo_2\n'
+    }
+    for k, v in dic.items():
+        with open(dir_src.joinpath(k), 'a') as f:
+            f.write(v)
+
+    # When -------------------------------------------------------------------------------------------------------------
+    sync_dirs('source', 'target')
+
+    # Then -------------------------------------------------------------------------------------------------------------
+    assert os.path.exists(dir_target / 'f1.txt')
+    with open(dir_target / 'f1.txt', 'r') as f:
+        content = f.read()
+    assert content == 'foo\n'
+    # TODO: the same with f2 and f3
+
