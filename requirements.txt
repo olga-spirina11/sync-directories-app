@@ -1,0 +1,4 @@
+tapi==0.1.7
+pytest==7.1.2
+uvicorn==0.18.3
+requests==2.28.1
