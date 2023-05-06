@@ -34,7 +34,7 @@ def sync_dirs(src_dir, target_dir):
 #     pass
 
 
-def test_smth(tmp_path):
+def test_creating_new_files(tmp_path):
     # Given ------------------------------------------------------------------------------------------------------------
     log = logging.getLogger(__name__)
     log.info(tmp_path)
@@ -65,4 +65,21 @@ def test_smth(tmp_path):
         content = f.read()
     assert content == 'foo\n'
     # TODO: the same with f2 and f3
+
+
+def test_change_file_content(tmp_path):
+    # given
+    dir_src = tmp_path / "source"
+    dir_src.mkdir()
+
+    dir_target = tmp_path / "target"
+    dir_target.mkdir()
+
+
+
+    # when
+    sync_dirs('source', 'target')
+
+    #then
+
 
