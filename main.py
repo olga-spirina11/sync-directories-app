@@ -2,6 +2,11 @@ import argparse
 import logging
 import os.path
 
+
+def sync_dirs(src_dir, target_dir):
+    pass
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, filename='/Users/grigorii/Projects/sync_folder_app/app.log')
     logger = logging.getLogger("foo")
@@ -13,16 +18,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--src', required=True, help='source folder')
     parser.add_argument('--target', required=True, help='target folder')
-    parser.add_argument('--interval_sec', required=True, help='interval of synchronization')
+    parser.add_argument('--interval-sec', required=True, help='interval of synchronization')
     parser.add_argument('--log', required=True, help='log file path')
 
     args = vars(parser.parse_args())
 
     print(args)
 
-
-def sync_dirs(src_dir, target_dir):
-    pass
+    sync_dirs(args.get('src'), args.get('target'))
 
 
 # @pytest.fixture(autouse=True)
