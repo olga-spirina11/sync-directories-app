@@ -4,6 +4,7 @@ import os
 import time
 import shutil
 import hashlib
+import pytest
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, filename='/Users/grigorii/Projects/sync_folder_app/app.log')
@@ -33,10 +34,10 @@ def compare_files(file1, file2):
                 return False
 
 current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+log = logging.getLogger(__name__)
 
 def sync_dirs(dir_src, dir_target):
-    log = logging.getLogger(__name__)
-    #if item is in src, but not in target
+    # if item is in src, but not in target
     for item in os.listdir(dir_src):
         src_path = os.path.join(dir_src, item)
         target_path = os.path.join(dir_target, item)
@@ -45,7 +46,7 @@ def sync_dirs(dir_src, dir_target):
                 shutil.copy2(src_path, dir_target)
                 print(f'[{current_time}] {src_path} is copied')
                 log.info(f'{src_path} is copied')
-            #if files in src and target have similar names - compare them by hash and replace if they are different
+            # if files in src and target have similar names - compare them by hash and replace if they are different
             elif compare_files(src_path, target_path):
                 print(f'[{current_time}] {src_path} is up to date')
                 log.info(f'{src_path} is up to date')
@@ -53,7 +54,7 @@ def sync_dirs(dir_src, dir_target):
                 shutil.copy2(src_path, dir_target)
                 print(f'[{current_time}] {src_path} is copied')
                 log.info(f'{src_path} is copied')
-        #if there are subdirs in dirs - cope if subdir doesn't exist and sync content if exists (recursively)
+        # if there are subdirs in dirs - coping if subdir doesn't exist and sync content if exists (recursively)
         elif os.path.isdir(src_path):
             if not os.path.exists(target_path):
                 shutil.copytree(src_path, target_path)
@@ -61,7 +62,7 @@ def sync_dirs(dir_src, dir_target):
                 log.info(f'{src_path} is copied')
             else:
                 sync_dirs(src_path, target_path)
-    #if there are files in target, but not in src - remove them from target
+    # if there are files in target, but not in src - remove them from target
     for item in os.listdir(dir_target):
         src_path = os.path.join(dir_src, item)
         target_path = os.path.join(dir_target, item)
@@ -70,15 +71,21 @@ def sync_dirs(dir_src, dir_target):
                 os.remove(target_path)
                 print(f'[{current_time}] {target_path} is deleted')
                 log.info(f'{target_path} is deleted')
-        #the same with subdirs
+        # the same with subdirs
         elif os.path.isdir(target_path):
             if not os.path.exists(src_path):
                 shutil.rmtree(target_path)
                 print(f'[{current_time}] {target_path} is deleted')
                 log.info(f'{target_path} is deleted')
 
-# @pytest.fixture(autouse=True)
-# def setup():
+@pytest.fixture(autouse=True)
+def setup():
+    # Create source & target dirs
+    dir_src = tmp_path / 'source'
+    os.mkdir(dir_src)
+
+    dir_target = tmp_path / 'target'
+    os.mkdir(dir_target)
 #     pass
 #
 #
@@ -88,19 +95,8 @@ def sync_dirs(dir_src, dir_target):
 
 def test_creating_new_files(tmp_path):
     # Given ------------------------------------------------------------------------------------------------------------
-    log = logging.getLogger(__name__)
-    log.info(tmp_path)
 
-    # Create source & target dirs
-    dir_src = tmp_path / 'source'
-    os.mkdir(dir_src)
-    log.info(f'{dir_src} is created')
-    print(f'[{current_time}] {dir_src} is created')
-
-    dir_target = tmp_path / 'target'
-    os.mkdir(dir_target)
-    log.info(f'{dir_target} is created')
-    print(f'[{current_time}] {dir_target} is created')
+    setup()
 
     # Create files
     dic = {
@@ -108,30 +104,20 @@ def test_creating_new_files(tmp_path):
         'f2.txt': 'bar\n',
         'f3.txt': 'foo_2\n'
     }
-    log.info(f'Files in dir are created')
-    print(f'[{current_time}] Files in dir are created')
 
-    #for k, v in list(dic.items()):
     for k, v in dic.items():
         with open(dir_src.joinpath(k), 'a') as f:
             f.write(v)
 
-    #create subdirs with file
+    # Create subdirs with file
     os.mkdir(os.path.join(dir_src, 'sub_dir'))
-    log.info(f'Subdir is created')
-    print(f'[{current_time}] Subdir is created')
 
     with open(os.path.join(dir_src, 'sub_dir', 'f4.txt'), "w") as f:
         f.write('Hello, world!\n')
-        log.info(f'File in subdirectory is created')
-        print(f'[{current_time}] File in subdirectory is created')
 
     # When -------------------------------------------------------------------------------------------------------------
-    #While True:
 
     sync_dirs(dir_src, dir_target)
-
-    #time.sleep(60)
 
     # Then -------------------------------------------------------------------------------------------------------------
     assert os.path.exists(dir_target / 'f1.txt')
@@ -157,20 +143,13 @@ def test_creating_new_files(tmp_path):
 
 
 def test_change_file_content(tmp_path):
-    # given
-    log = logging.getLogger(__name__)
-    log.info(tmp_path)
-
+    # Given-------------------------------------------------------------------------------------------------------------
     # Create source & target dirs
     dir_src = tmp_path / 'source'
     os.mkdir(dir_src)
-    log.info(f'{dir_src} is created')
-    print(f'[{current_time}] {dir_src} is created')
 
     dir_target = tmp_path / 'target'
     os.mkdir(dir_target)
-    log.info(f'{dir_target} is created')
-    print(f'[{current_time}] {dir_target} is created')
 
     # Create files
     dic = {
@@ -178,8 +157,6 @@ def test_change_file_content(tmp_path):
         'f2.txt': 'bar\n',
         'f3.txt': 'foo_2\n'
     }
-    log.info(f'Files in dir are created')
-    print(f'[{current_time}] Files in dir are created')
 
     for k, v in dic.items():
         with open(dir_src.joinpath(k), 'a') as f:
@@ -187,13 +164,9 @@ def test_change_file_content(tmp_path):
 
     # create subdirs with file
     os.mkdir(os.path.join(dir_src, 'sub_dir'))
-    log.info(f'Subdir is created')
-    print(f'[{current_time}] Subdir is created')
 
     with open(os.path.join(dir_src, 'sub_dir', 'f4.txt'), "w") as f:
         f.write('Hello, world!\n')
-        log.info(f'File in subdirectory is created')
-        print(f'[{current_time}] File in subdirectory is created')
 
     # Create files with similar names, but different content in target
     dic= {
@@ -201,27 +174,21 @@ def test_change_file_content(tmp_path):
         'f2.txt': 'Guten Tag\n',
         'f3.txt': 'Danke\n'
     }
-    log.info(f'Files in dir are created')
-    print(f'[{current_time}] Files in dir are created')
 
     for k, v in dic.items():
         with open(dir_target.joinpath(k), 'a') as f:
             f.write(v)
 
-    # create subdirs with file
+    # Create subdirs with file
     os.mkdir(os.path.join(dir_target, 'sub_dir'))
-    log.info(f'Subdir is created')
-    print(f'[{current_time}] Subdir is created')
 
     with open(os.path.join(dir_target, 'sub_dir', 'f4.txt'), "w") as f:
         f.write('Hello, Veeam!\n')
-        log.info(f'File in subdirectory is created')
-        print(f'[{current_time}] File in subdirectory is created')
 
-    # when
+    # When--------------------------------------------------------------------------------------------------------------
     sync_dirs(dir_src, dir_target)
 
-    #then
+    # Then--------------------------------------------------------------------------------------------------------------
     assert os.path.exists(dir_target / 'f1.txt')
     with open(dir_target / 'f1.txt', 'r') as f:
         content = f.read()
@@ -245,20 +212,13 @@ def test_change_file_content(tmp_path):
 
 
 def test_delete_file(tmp_path):
-    # given
-    log = logging.getLogger(__name__)
-    log.info(tmp_path)
-
+    # Given-------------------------------------------------------------------------------------------------------------
     # Create source & target dirs
     dir_src = tmp_path / 'source'
     os.mkdir(dir_src)
-    log.info(f'{dir_src} is created')
-    print(f'[{current_time}] {dir_src} is created')
 
     dir_target = tmp_path / 'target'
     os.mkdir(dir_target)
-    log.info(f'{dir_target} is created')
-    print(f'[{current_time}] {dir_target} is created')
 
     # Create files
     dic = {
@@ -266,8 +226,6 @@ def test_delete_file(tmp_path):
         'f2.txt': 'bar\n',
         'f3.txt': 'foo_2\n'
     }
-    log.info(f'Files in dir are created')
-    print(f'Files in dir are created')
 
     for k, v in dic.items():
         with open(dir_src.joinpath(k), 'a') as f:
@@ -275,13 +233,9 @@ def test_delete_file(tmp_path):
 
     # create subdirs with file
     os.mkdir(os.path.join(dir_src, 'sub_dir'))
-    log.info(f'Subdir is created')
-    print(f'[{current_time}] Subdir is created')
 
     with open(os.path.join(dir_src, 'sub_dir', 'f4.txt'), "w") as f:
         f.write('Hello, world!\n')
-        log.info(f'File in subdirectory is created')
-        print(f'[{current_time}] File in subdirectory is created')
 
     # Create files with different names in target
     dic = {
@@ -289,8 +243,6 @@ def test_delete_file(tmp_path):
         'f6.txt': 'Guten Tag\n',
         'f7.txt': 'Danke\n'
     }
-    log.info(f'Files in dir are created')
-    print(f'[{current_time}] Files in dir are created')
 
     for k, v in dic.items():
         with open(dir_target.joinpath(k), 'a') as f:
@@ -298,18 +250,14 @@ def test_delete_file(tmp_path):
 
     # create subdirs with file
     os.mkdir(os.path.join(dir_target, 'sub_dir_2'))
-    log.info(f'Subdir is created')
-    print(f'[{current_time}] Subdir is created')
 
     with open(os.path.join(dir_target, 'sub_dir_2', 'f8.txt'), "w") as f:
         f.write('Hello, Veeam!\n')
-        log.info(f'File in subdirectory is created')
-        print(f'[{current_time}] File in subdirectory is created')
 
-    # when
+    # When--------------------------------------------------------------------------------------------------------------
     sync_dirs(dir_src, dir_target)
 
-    #then
+    # Then--------------------------------------------------------------------------------------------------------------
     assert os.path.exists(dir_target / 'f1.txt')
     with open(dir_target / 'f1.txt', 'r') as f:
         content = f.read()
